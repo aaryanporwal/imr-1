@@ -5,26 +5,37 @@ import express from "express";
 const prisma = new PrismaClient();
 const app = express();
 
+app.get("/", (req, res) => {
+  res.send("Go to /getDoctorsByName and pass in name as query. Example: `http://139.59.3.10:3000/getDoctorsByName?name=Sanjay`" );
+})
+
 app.get("/getDoctorsByName", async (req, res) => {
+  res.header("Content-Type",'application/json');
+  // if no request parameter passed:
+  if(!req.query.name){
+    res.send("No name param passed: Try this: `http://139.59.3.10:3000/getDoctorsByName?name=Sanjay`");
+  }
   try {
     const { name } = req.query;
     // validate if name is single word
+    let searchTerm = name;
     if (name.split(" ").length > 1) {
-      res.end("invalid name");
+      searchTerm = name.split(" ").join(" & ");
     }
     const doctors = await prisma.user.findMany({
       where: {
         name: {
-          search: name,
+          search: searchTerm,
         },
       },
     });
-    res.json(doctors);
+    res.send(JSON.stringify(doctors, null, 2));
   } catch (e) {
     console.log(e);
     res.send(e);
   }
 });
+
 
 // start the server
 app.listen(3000, () => {
